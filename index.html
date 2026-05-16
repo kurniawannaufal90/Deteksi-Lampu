@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Smart Light Detector - Day & Night Smart</title>
+    <title>AI Smart Light Detector - Pure Analytics</title>
     <style>
         :root {
             --bg: #05070a;
@@ -57,17 +57,17 @@
             line-height: 0;
         }
 
-        video { width: 100%; height: auto; display: block; filter: contrast(1.2) brightness(1.0); }
+        video { width: 100%; height: auto; display: block; filter: contrast(1.1); }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
         .status-display { 
-            margin: 25px 0; 
-            padding: 25px; 
+            margin: 15px 0 5px 0; 
+            padding: 30px; 
             border-radius: 20px; 
-            font-size: 2.2rem; 
+            font-size: 2.5rem; 
             font-weight: 900; 
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            letter-spacing: 4px;
+            transition: all 0.3s ease;
+            letter-spacing: 6px;
             border: 3px solid transparent;
         }
 
@@ -86,39 +86,11 @@
             box-shadow: 0 0 40px rgba(255, 51, 51, 0.3);
             text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
         }
-
-        .meter-wrapper { margin: 20px 0; text-align: left; }
-        .meter-label { font-size: 0.75rem; color: #666; margin-bottom: 8px; font-weight: bold; letter-spacing: 1px; }
-        .meter-container { 
-            width: 100%; 
-            background: #111; 
-            border-radius: 50px; 
-            height: 10px; 
-            overflow: hidden; 
-            border: 1px solid #222;
-        }
-        #meter { 
-            height: 100%; 
-            width: 0%; 
-            background: linear-gradient(90deg, #ff3333, var(--on-color)); 
-            transition: width 0.1s ease;
-        }
-
-        .debug-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 20px;
-            font-family: monospace;
-            font-size: 0.7rem;
-            color: #444;
-        }
-        .debug-item { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; }
     </style>
 </head>
 <body>
 
-    <h2>LUX MONITOR <small style="color: var(--accent); font-size: 0.4em;">V6.0 SMART</small></h2>
+    <h2>LUX MONITOR <small style="color: var(--accent); font-size: 0.4em;">V8.0 PURE</small></h2>
     
     <div class="main-card">
         <div id="video-container">
@@ -126,19 +98,7 @@
             <canvas id="canvas"></canvas>
         </div>
 
-        <div class="meter-wrapper">
-            <div class="meter-label">LIGHT CORE INTENSITY</div>
-            <div class="meter-container">
-                <div id="meter"></div>
-            </div>
-        </div>
-
         <div id="status" class="status-display mati">OFF</div>
-        
-        <div class="debug-grid">
-            <div class="debug-item">LIGHT VALUE: <span id="val" style="color:#eee">0</span></div>
-            <div class="debug-item">TARGET MIN: <span id="thresh" style="color:var(--accent)">225</span></div>
-        </div>
     </div>
 
     <script>
@@ -146,13 +106,6 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         const statusDiv = document.getElementById('status');
-        const meter = document.getElementById('meter');
-        const valDisp = document.getElementById('val');
-        const threshDisp = document.getElementById('thresh');
-
-        // Batas nilai dinaikkan ke 225 agar cahaya luar/jendela di siang hari tidak memicu status ON
-        const dayNightThreshold = 225; 
-        threshDisp.innerText = dayNightThreshold;
 
         async function init() {
             try {
@@ -173,35 +126,41 @@
                 canvas.height = video.videoHeight;
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 
-                const size = 110; // Ukuran kotak dioptimalkan agar fokus pada inti lampu gantung
+                const size = 140; 
                 const x = (canvas.width/2) - (size/2);
                 const y = (canvas.height/2) - (size/2);
                 const pixels = ctx.getImageData(x, y, size, size).data;
 
-                let peakLightValue = 0;
+                let maxB = 0;
+                let minB = 255;
+                let totalB = 0;
+                let count = 0;
 
                 for (let i = 0; i < pixels.length; i += 4) {
                     const r = pixels[i];
                     const g = pixels[i + 1];
                     const b = pixels[i + 2];
                     
-                    // Menggunakan formula Luminance standar industri (memberi bobot akurat pada warna lampu)
-                    const trueLuminance = (0.299 * r) + (0.587 * g) + (0.114 * b);
+                    // Rumus sensitivitas cahaya murni
+                    const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
                     
-                    if (trueLuminance > peakLightValue) {
-                        peakLightValue = trueLuminance;
-                    }
+                    if (brightness > maxB) maxB = brightness;
+                    if (brightness < minB) minB = brightness;
+                    totalB += brightness;
+                    count++;
                 }
 
-                const finalValue = Math.round(peakLightValue);
-                valDisp.innerText = finalValue;
-                meter.style.width = (finalValue / 255) * 100 + "%";
+                const avgB = totalB / count;
+                
+                // Menghitung variasi kontras tajam di area lampu
+                const localContrast = maxB - avgB;
 
                 ctx.setLineDash([6, 6]);
                 ctx.lineWidth = 5;
 
-                // Eksekusi Logika Cerdas: Harus menembus kilauan ekstrem inti lampu (225+)
-                if (finalValue >= dayNightThreshold) {
+                // LOGIKA ANTI-CAHAYA JENDELA / ANTI-PANTULAN:
+                // Lampu benar-benar NYALA jika ada titik silau (maxB > 200) DAN kontrasnya sangat tajam (localContrast > 75)
+                if (maxB > 200 && localContrast > 75) {
                     statusDiv.innerText = "ON";
                     statusDiv.className = "status-display nyala";
                     ctx.strokeStyle = "#00ff88";
