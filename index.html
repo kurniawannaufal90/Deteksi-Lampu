@@ -284,19 +284,39 @@ function analyzeFrame(){
     }
 
     ctx.drawImage(
-        video,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
+    video,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+);
 
-    const frame = ctx.getImageData(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
+// Overlay area scan tengah
+ctx.strokeStyle = "#00ffae";
+ctx.lineWidth = 2;
+
+ctx.strokeRect(
+    scanX,
+    scanY,
+    scanWidth,
+    scanHeight
+);
+
+    const scanWidth = canvas.width * 0.5;
+const scanHeight = canvas.height * 0.5;
+
+const scanX =
+    (canvas.width - scanWidth) / 2;
+
+const scanY =
+    (canvas.height - scanHeight) / 2;
+
+const frame = ctx.getImageData(
+    scanX,
+    scanY,
+    scanWidth,
+    scanHeight
+);
 
     const data = frame.data;
 
