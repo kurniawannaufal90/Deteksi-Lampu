@@ -302,8 +302,8 @@ function analyzeFrame(){
 
     let brightness = 0;
 
-    let warmPixels = 0;
-    let whitePixels = 0;
+    let brightPixels = 0;
+    let superBrightPixels = 0;
 
     for(let i=0;i<data.length;i+=4){
 
@@ -316,24 +316,14 @@ function analyzeFrame(){
 
         brightness += avg;
 
-        // Lampu warm
-        if(
-            r > 160 &&
-            g > 130 &&
-            b < 140
-        ){
-            warmPixels++;
+        // Pixel terang biasa
+        if(avg > 170){
+            brightPixels++;
         }
 
-        // Lampu putih LED
-        if(
-            r > 170 &&
-            g > 170 &&
-            b > 170 &&
-            Math.abs(r-g) < 25 &&
-            Math.abs(g-b) < 25
-        ){
-            whitePixels++;
+        // Pixel sangat terang
+        if(avg > 230){
+            superBrightPixels++;
         }
 
     }
@@ -343,16 +333,13 @@ function analyzeFrame(){
 
     brightness /= totalPixels;
 
-    const warmRatio =
-        warmPixels / totalPixels;
+    const brightRatio =
+        brightPixels / totalPixels;
 
-    const whiteRatio =
-        whitePixels / totalPixels;
+    const superBrightRatio =
+        superBrightPixels / totalPixels;
 
-    const lampConfidence =
-        warmRatio + whiteRatio;
-
-    // Brightness UI
+    // Progress bar
     const level =
         Math.min(
             100,
@@ -367,21 +354,34 @@ function analyzeFrame(){
     percent.innerHTML =
         level + "% Brightness";
 
-    // =========================
-    // DETEKSI FINAL
-    // =========================
+    // =====================
+    // DETEKSI BARU
+    // =====================
+
+    /*
+        RULE:
+
+        Lampu ON jika:
+        - Ruangan cukup terang
+        - Ada hotspot cahaya terang
+
+        Matahari biasanya:
+        - terang merata
+        - hotspot kecil
+
+        Lampu LED:
+        - punya hotspot kuat
+    */
 
     const lampDetected = (
 
-        brightness > 80 &&
+        brightness > 65 &&
 
         (
 
-            whiteRatio > 0.03 ||
+            brightRatio > 0.08 ||
 
-            warmRatio > 0.02 ||
-
-            lampConfidence > 0.025
+            superBrightRatio > 0.01
 
         )
 
