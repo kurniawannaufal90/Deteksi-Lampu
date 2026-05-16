@@ -236,13 +236,13 @@ async function startCamera(){
 
     try{
 
-        // Paksa kamera belakang
+        // Kamera belakang
         const stream =
         await navigator.mediaDevices.getUserMedia({
 
             video:{
                 facingMode:{
-                    exact:"environment"
+                    ideal:"environment"
                 },
                 width:{ideal:1280},
                 height:{ideal:720}
@@ -254,37 +254,22 @@ async function startCamera(){
 
         video.srcObject = stream;
 
-        setInterval(analyzeFrame,500);
+        // Tunggu video ready
+        video.onloadedmetadata = ()=>{
+
+            video.play();
+
+            setInterval(analyzeFrame,500);
+
+        };
 
     }
 
     catch(err){
 
-        // Fallback kalau exact gagal
-        try{
+        alert("Kamera tidak bisa diakses");
 
-            const fallback =
-            await navigator.mediaDevices.getUserMedia({
-
-                video:{
-                    facingMode:"environment"
-                }
-
-            });
-
-            video.srcObject = fallback;
-
-            setInterval(analyzeFrame,500);
-
-        }
-
-        catch(e){
-
-            alert(
-                "Kamera belakang tidak bisa diakses"
-            );
-
-        }
+        console.log(err);
 
     }
 
@@ -294,25 +279,32 @@ startCamera();
 
 function analyzeFrame(){
 
+    // Hindari error frame kosong
+    if(video.readyState < 2){
+        return;
+    }
+
     ctx.drawImage(
         video,
         0,
         0,
-        300,
-        200
+        canvas.width,
+        canvas.height
     );
 
     const frame = ctx.getImageData(
         0,
         0,
-        300,
-        200
+        canvas.width,
+        canvas.height
     );
 
     const data = frame.data;
 
     let brightness = 0;
-    let lampPixels = 0;
+
+    let warmPixels = 0;
+    let whitePixels = 0;
 
     for(let i=0;i<data.length;i+=4){
 
@@ -320,30 +312,52 @@ function analyzeFrame(){
         const g = data[i+1];
         const b = data[i+2];
 
-        const avg = (r+g+b)/3;
+        const avg =
+            (r + g + b) / 3;
 
         brightness += avg;
 
-        // Karakter warna lampu
+        // Lampu warm kuning
         if(
-            r > 140 &&
-            g > 120 &&
-            b < 180
+            r > 170 &&
+            g > 140 &&
+            b < 130
         ){
-            lampPixels++;
+            warmPixels++;
+        }
+
+        // Lampu putih LED
+        if(
+            r > 200 &&
+            g > 200 &&
+            b > 200
+        ){
+            whitePixels++;
         }
 
     }
 
-    brightness /= (data.length/4);
+    const totalPixels =
+        data.length / 4;
 
-    const lampRatio =
-        lampPixels / (data.length/4);
+    brightness /= totalPixels;
 
+    const warmRatio =
+        warmPixels / totalPixels;
+
+    const whiteRatio =
+        whitePixels / totalPixels;
+
+    const lampConfidence =
+        warmRatio + whiteRatio;
+
+    // Progress brightness
     const level =
         Math.min(
             100,
-            Math.floor(brightness)
+            Math.floor(
+                brightness / 2.2
+            )
         );
 
     fill.style.width =
@@ -352,20 +366,33 @@ function analyzeFrame(){
     percent.innerHTML =
         level + "% Brightness";
 
-    // =======================
-    // DETEKSI LAMPU
-    // =======================
+    // =========================
+    // DETEKSI BARU
+    // =========================
 
-    if(
-        brightness > 60 &&
-        lampRatio > 0.08
-    ){
+    /*
+        RULE:
+
+        - Gelap = OFF
+        - Terang karena matahari = OFF
+        - Hanya lampu asli = ON
+    */
+
+    const lampDetected = (
+
+        brightness > 95 &&
+
+        lampConfidence > 0.015
+
+    );
+
+    if(lampDetected){
 
         statusText.innerHTML =
             "Lamp ON";
 
         desc.innerHTML =
-            "Artificial room light detected.";
+            "Artificial lamp detected.";
 
         indicator.style.background =
             "#00ff99";
@@ -381,7 +408,7 @@ function analyzeFrame(){
             "Lamp OFF";
 
         desc.innerHTML =
-            "No artificial light detected.";
+            "No artificial lamp detected.";
 
         indicator.style.background =
             "#ff3b3b";
