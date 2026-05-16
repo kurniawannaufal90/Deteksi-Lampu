@@ -18,11 +18,11 @@ body{
     background:#0b0f19;
     font-family:Arial, sans-serif;
     color:white;
-    height:100vh;
+    min-height:100vh;
     display:flex;
     justify-content:center;
     align-items:center;
-    overflow:hidden;
+    padding:20px;
 }
 
 .container{
@@ -55,12 +55,14 @@ body{
     overflow:hidden;
     border-radius:22px;
     background:black;
+    aspect-ratio: 3/4;
 }
 
 video{
     width:100%;
-    display:block;
+    height:100%;
     object-fit:cover;
+    display:block;
 }
 
 .overlay{
@@ -236,7 +238,6 @@ async function startCamera(){
 
     try{
 
-        // Kamera belakang
         const stream =
         await navigator.mediaDevices.getUserMedia({
 
@@ -254,7 +255,6 @@ async function startCamera(){
 
         video.srcObject = stream;
 
-        // Tunggu video ready
         video.onloadedmetadata = ()=>{
 
             video.play();
@@ -279,7 +279,6 @@ startCamera();
 
 function analyzeFrame(){
 
-    // Hindari error frame kosong
     if(video.readyState < 2){
         return;
     }
@@ -317,20 +316,22 @@ function analyzeFrame(){
 
         brightness += avg;
 
-        // Lampu warm kuning
+        // Lampu warm
         if(
-            r > 170 &&
-            g > 140 &&
-            b < 130
+            r > 160 &&
+            g > 130 &&
+            b < 140
         ){
             warmPixels++;
         }
 
         // Lampu putih LED
         if(
-            r > 200 &&
-            g > 200 &&
-            b > 200
+            r > 170 &&
+            g > 170 &&
+            b > 170 &&
+            Math.abs(r-g) < 25 &&
+            Math.abs(g-b) < 25
         ){
             whitePixels++;
         }
@@ -351,7 +352,7 @@ function analyzeFrame(){
     const lampConfidence =
         warmRatio + whiteRatio;
 
-    // Progress brightness
+    // Brightness UI
     const level =
         Math.min(
             100,
@@ -367,22 +368,22 @@ function analyzeFrame(){
         level + "% Brightness";
 
     // =========================
-    // DETEKSI BARU
+    // DETEKSI FINAL
     // =========================
-
-    /*
-        RULE:
-
-        - Gelap = OFF
-        - Terang karena matahari = OFF
-        - Hanya lampu asli = ON
-    */
 
     const lampDetected = (
 
-        brightness > 95 &&
+        brightness > 80 &&
 
-        lampConfidence > 0.015
+        (
+
+            whiteRatio > 0.03 ||
+
+            warmRatio > 0.02 ||
+
+            lampConfidence > 0.025
+
+        )
 
     );
 
