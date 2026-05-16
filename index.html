@@ -373,19 +373,32 @@ function analyzeFrame(){
         - punya hotspot kuat
     */
 
-    const lampDetected = (
+    const hour = new Date().getHours();
 
+// Anggap malam jam 18 - 6
+const isNight =
+    hour >= 18 || hour <= 6;
+
+const lampDetected = (
+
+    // Kalau malam dan ruangan terang
+    (
+        isNight &&
+        brightness > 55
+    )
+
+    ||
+
+    // Atau ada hotspot terang
+    (
         brightness > 65 &&
-
         (
-
-            brightRatio > 0.08 ||
-
-            superBrightRatio > 0.01
-
+            brightRatio > 0.05 ||
+            superBrightRatio > 0.008
         )
+    )
 
-    );
+);
 
     if(lampDetected){
 
