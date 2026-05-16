@@ -60,6 +60,7 @@ body{
 video{
     width:100%;
     display:block;
+    object-fit:cover;
 }
 
 .overlay{
@@ -167,7 +168,7 @@ video{
 
     <div class="header">
         <h1>Smart Lamp Detector</h1>
-        <p>Camera AI Light Recognition</p>
+        <p>Rear Camera AI Light Recognition</p>
     </div>
 
     <div class="camera-box">
@@ -231,21 +232,65 @@ const indicator = document.getElementById("indicator");
 const fill = document.getElementById("fill");
 const percent = document.getElementById("percent");
 
-navigator.mediaDevices.getUserMedia({
-    video:true
-})
-.then(stream=>{
+async function startCamera(){
 
-    video.srcObject = stream;
+    try{
 
-    setInterval(analyzeFrame,500);
+        // Paksa kamera belakang
+        const stream =
+        await navigator.mediaDevices.getUserMedia({
 
-})
-.catch(err=>{
+            video:{
+                facingMode:{
+                    exact:"environment"
+                },
+                width:{ideal:1280},
+                height:{ideal:720}
+            },
 
-    alert("Camera tidak bisa diakses");
+            audio:false
 
-});
+        });
+
+        video.srcObject = stream;
+
+        setInterval(analyzeFrame,500);
+
+    }
+
+    catch(err){
+
+        // Fallback kalau exact gagal
+        try{
+
+            const fallback =
+            await navigator.mediaDevices.getUserMedia({
+
+                video:{
+                    facingMode:"environment"
+                }
+
+            });
+
+            video.srcObject = fallback;
+
+            setInterval(analyzeFrame,500);
+
+        }
+
+        catch(e){
+
+            alert(
+                "Kamera belakang tidak bisa diakses"
+            );
+
+        }
+
+    }
+
+}
+
+startCamera();
 
 function analyzeFrame(){
 
@@ -279,8 +324,7 @@ function analyzeFrame(){
 
         brightness += avg;
 
-        // Deteksi karakter lampu
-        // Warm putih stabil
+        // Karakter warna lampu
         if(
             r > 140 &&
             g > 120 &&
@@ -297,14 +341,21 @@ function analyzeFrame(){
         lampPixels / (data.length/4);
 
     const level =
-        Math.min(100, Math.floor(brightness));
+        Math.min(
+            100,
+            Math.floor(brightness)
+        );
 
-    fill.style.width = level + "%";
-    percent.innerHTML = level + "% Brightness";
+    fill.style.width =
+        level + "%";
 
-    // ===== DETEKSI =====
+    percent.innerHTML =
+        level + "% Brightness";
 
-    // Lampu ON
+    // =======================
+    // DETEKSI LAMPU
+    // =======================
+
     if(
         brightness > 60 &&
         lampRatio > 0.08
@@ -324,7 +375,6 @@ function analyzeFrame(){
 
     }
 
-    // Semua selain lampu dianggap OFF
     else{
 
         statusText.innerHTML =
