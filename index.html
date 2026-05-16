@@ -283,40 +283,55 @@ function analyzeFrame(){
         return;
     }
 
+    // =========================
+    // DRAW VIDEO
+    // =========================
+
     ctx.drawImage(
-    video,
-    0,
-    0,
-    canvas.width,
-    canvas.height
-);
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
 
-// Overlay area scan tengah
-ctx.strokeStyle = "#00ffae";
-ctx.lineWidth = 2;
+    // =========================
+    // AREA SCAN TENGAH
+    // =========================
 
-ctx.strokeRect(
-    scanX,
-    scanY,
-    scanWidth,
-    scanHeight
-);
+    const scanWidth =
+        canvas.width * 0.5;
 
-    const scanWidth = canvas.width * 0.5;
-const scanHeight = canvas.height * 0.5;
+    const scanHeight =
+        canvas.height * 0.5;
 
-const scanX =
-    (canvas.width - scanWidth) / 2;
+    const scanX =
+        (canvas.width - scanWidth) / 2;
 
-const scanY =
-    (canvas.height - scanHeight) / 2;
+    const scanY =
+        (canvas.height - scanHeight) / 2;
 
-const frame = ctx.getImageData(
-    scanX,
-    scanY,
-    scanWidth,
-    scanHeight
-);
+    // Optional debug box
+    ctx.strokeStyle = "#00ffae";
+    ctx.lineWidth = 2;
+
+    ctx.strokeRect(
+        scanX,
+        scanY,
+        scanWidth,
+        scanHeight
+    );
+
+    // =========================
+    // AMBIL DATA AREA TENGAH
+    // =========================
+
+    const frame = ctx.getImageData(
+        scanX,
+        scanY,
+        scanWidth,
+        scanHeight
+    );
 
     const data = frame.data;
 
@@ -337,12 +352,12 @@ const frame = ctx.getImageData(
         brightness += avg;
 
         // Area cukup terang
-        if(avg > 100){
+        if(avg > 95){
             mediumPixels++;
         }
 
         // Area sangat terang
-        if(avg > 170){
+        if(avg > 160){
             brightPixels++;
         }
 
@@ -378,7 +393,7 @@ const frame = ctx.getImageData(
         level + "% Brightness";
 
     // =========================
-    // DETEKSI CERDAS
+    // WAKTU
     // =========================
 
     const hour =
@@ -397,13 +412,14 @@ const frame = ctx.getImageData(
 
         lampDetected = (
 
-            // Ruangan terang merata
-            brightness > 70 &&
+            // Ruangan cukup terang
+            brightness > 58 &&
 
-            mediumRatio > 0.45 &&
+            // Cahaya cukup merata
+            mediumRatio > 0.28 &&
 
-            // Ada cukup banyak area terang
-            brightRatio > 0.03
+            // Ada area terang
+            brightRatio > 0.015
 
         );
 
@@ -415,13 +431,13 @@ const frame = ctx.getImageData(
 
     else{
 
-        // Siang selalu OFF
-        // karena cahaya alami diabaikan
-
+        // Siang dianggap OFF
         lampDetected = false;
 
     }
 
+    // =========================
+    // OUTPUT
     // =========================
 
     if(lampDetected){
