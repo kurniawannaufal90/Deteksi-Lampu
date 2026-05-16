@@ -302,8 +302,8 @@ function analyzeFrame(){
 
     let brightness = 0;
 
+    let mediumPixels = 0;
     let brightPixels = 0;
-    let superBrightPixels = 0;
 
     for(let i=0;i<data.length;i+=4){
 
@@ -316,14 +316,14 @@ function analyzeFrame(){
 
         brightness += avg;
 
-        // Pixel terang biasa
-        if(avg > 170){
-            brightPixels++;
+        // Area cukup terang
+        if(avg > 100){
+            mediumPixels++;
         }
 
-        // Pixel sangat terang
-        if(avg > 230){
-            superBrightPixels++;
+        // Area sangat terang
+        if(avg > 170){
+            brightPixels++;
         }
 
     }
@@ -333,13 +333,16 @@ function analyzeFrame(){
 
     brightness /= totalPixels;
 
+    const mediumRatio =
+        mediumPixels / totalPixels;
+
     const brightRatio =
         brightPixels / totalPixels;
 
-    const superBrightRatio =
-        superBrightPixels / totalPixels;
+    // =========================
+    // UI BRIGHTNESS
+    // =========================
 
-    // Progress bar
     const level =
         Math.min(
             100,
@@ -354,51 +357,52 @@ function analyzeFrame(){
     percent.innerHTML =
         level + "% Brightness";
 
-    // =====================
-    // DETEKSI BARU
-    // =====================
+    // =========================
+    // DETEKSI CERDAS
+    // =========================
 
-    /*
-        RULE:
+    const hour =
+        new Date().getHours();
 
-        Lampu ON jika:
-        - Ruangan cukup terang
-        - Ada hotspot cahaya terang
+    const isNight =
+        hour >= 18 || hour <= 6;
 
-        Matahari biasanya:
-        - terang merata
-        - hotspot kecil
+    let lampDetected = false;
 
-        Lampu LED:
-        - punya hotspot kuat
-    */
+    // =========================
+    // MODE MALAM
+    // =========================
 
-    const hour = new Date().getHours();
+    if(isNight){
 
-// Anggap malam jam 18 - 6
-const isNight =
-    hour >= 18 || hour <= 6;
+        lampDetected = (
 
-const lampDetected = (
+            // Ruangan terang merata
+            brightness > 70 &&
 
-    // Kalau malam dan ruangan terang
-    (
-        isNight &&
-        brightness > 55
-    )
+            mediumRatio > 0.45 &&
 
-    ||
+            // Ada cukup banyak area terang
+            brightRatio > 0.03
 
-    // Atau ada hotspot terang
-    (
-        brightness > 65 &&
-        (
-            brightRatio > 0.05 ||
-            superBrightRatio > 0.008
-        )
-    )
+        );
 
-);
+    }
+
+    // =========================
+    // MODE SIANG
+    // =========================
+
+    else{
+
+        // Siang selalu OFF
+        // karena cahaya alami diabaikan
+
+        lampDetected = false;
+
+    }
+
+    // =========================
 
     if(lampDetected){
 
@@ -406,7 +410,7 @@ const lampDetected = (
             "Lamp ON";
 
         desc.innerHTML =
-            "Artificial lamp detected.";
+            "LED room lighting detected.";
 
         indicator.style.background =
             "#00ff99";
@@ -422,7 +426,7 @@ const lampDetected = (
             "Lamp OFF";
 
         desc.innerHTML =
-            "No artificial lamp detected.";
+            "No room lamp detected.";
 
         indicator.style.background =
             "#ff3b3b";
