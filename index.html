@@ -295,14 +295,11 @@ startCamera();
 
 function analyzeFrame(){
 
-    // Pastikan video ready
-    if(
-        video.readyState !== 4
-    ){
+    if(video.readyState < 2){
         return;
     }
 
-    // Draw frame
+    // Draw video
     ctx.drawImage(
         video,
         0,
@@ -312,7 +309,7 @@ function analyzeFrame(){
     );
 
     // =====================
-    // SCAN AREA TENGAH
+    // AREA TENGAH
     // =====================
 
     const scanWidth =
@@ -327,24 +324,13 @@ function analyzeFrame(){
     const scanY =
         (canvas.height - scanHeight) / 2;
 
-    // Kotak scan
-    ctx.strokeStyle = "#00ffae";
-    ctx.lineWidth = 5;
-
-    ctx.strokeRect(
+    // Ambil data area tengah
+    const frame = ctx.getImageData(
         scanX,
         scanY,
         scanWidth,
         scanHeight
     );
-
-    const frame =
-        ctx.getImageData(
-            scanX,
-            scanY,
-            scanWidth,
-            scanHeight
-        );
 
     const data = frame.data;
 
@@ -364,10 +350,12 @@ function analyzeFrame(){
 
         brightness += avg;
 
+        // Area cukup terang
         if(avg > 95){
             mediumPixels++;
         }
 
+        // Area sangat terang
         if(avg > 160){
             brightPixels++;
         }
@@ -386,7 +374,7 @@ function analyzeFrame(){
         brightPixels / totalPixels;
 
     // =====================
-    // UI
+    // UI BRIGHTNESS
     // =====================
 
     const level =
@@ -428,6 +416,7 @@ function analyzeFrame(){
         );
 
     }
+
     else{
 
         lampDetected = false;
