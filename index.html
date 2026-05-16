@@ -234,6 +234,8 @@ const indicator = document.getElementById("indicator");
 const fill = document.getElementById("fill");
 const percent = document.getElementById("percent");
 
+let detectorStarted = false;
+
 async function startCamera(){
 
     try{
@@ -244,9 +246,7 @@ async function startCamera(){
             video:{
                 facingMode:{
                     ideal:"environment"
-                },
-                width:{ideal:1280},
-                height:{ideal:720}
+                }
             },
 
             audio:false
@@ -259,7 +259,23 @@ async function startCamera(){
 
             video.play();
 
-            setInterval(analyzeFrame,500);
+            // Pakai ukuran video asli
+            canvas.width =
+                video.videoWidth;
+
+            canvas.height =
+                video.videoHeight;
+
+            if(!detectorStarted){
+
+                detectorStarted = true;
+
+                setInterval(
+                    analyzeFrame,
+                    500
+                );
+
+            }
 
         };
 
@@ -267,7 +283,7 @@ async function startCamera(){
 
     catch(err){
 
-        alert("Kamera tidak bisa diakses");
+        alert("Camera error");
 
         console.log(err);
 
@@ -279,14 +295,14 @@ startCamera();
 
 function analyzeFrame(){
 
-    if(video.readyState < 2){
+    // Pastikan video ready
+    if(
+        video.readyState !== 4
+    ){
         return;
     }
 
-    // =========================
-    // DRAW VIDEO
-    // =========================
-
+    // Draw frame
     ctx.drawImage(
         video,
         0,
@@ -295,9 +311,9 @@ function analyzeFrame(){
         canvas.height
     );
 
-    // =========================
-    // AREA SCAN TENGAH
-    // =========================
+    // =====================
+    // SCAN AREA TENGAH
+    // =====================
 
     const scanWidth =
         canvas.width * 0.5;
@@ -311,9 +327,9 @@ function analyzeFrame(){
     const scanY =
         (canvas.height - scanHeight) / 2;
 
-    // Optional debug box
+    // Kotak scan
     ctx.strokeStyle = "#00ffae";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 5;
 
     ctx.strokeRect(
         scanX,
@@ -322,16 +338,13 @@ function analyzeFrame(){
         scanHeight
     );
 
-    // =========================
-    // AMBIL DATA AREA TENGAH
-    // =========================
-
-    const frame = ctx.getImageData(
-        scanX,
-        scanY,
-        scanWidth,
-        scanHeight
-    );
+    const frame =
+        ctx.getImageData(
+            scanX,
+            scanY,
+            scanWidth,
+            scanHeight
+        );
 
     const data = frame.data;
 
@@ -351,12 +364,10 @@ function analyzeFrame(){
 
         brightness += avg;
 
-        // Area cukup terang
         if(avg > 95){
             mediumPixels++;
         }
 
-        // Area sangat terang
         if(avg > 160){
             brightPixels++;
         }
@@ -374,9 +385,9 @@ function analyzeFrame(){
     const brightRatio =
         brightPixels / totalPixels;
 
-    // =========================
-    // UI BRIGHTNESS
-    // =========================
+    // =====================
+    // UI
+    // =====================
 
     const level =
         Math.min(
@@ -392,9 +403,9 @@ function analyzeFrame(){
     percent.innerHTML =
         level + "% Brightness";
 
-    // =========================
-    // WAKTU
-    // =========================
+    // =====================
+    // DETEKSI
+    // =====================
 
     const hour =
         new Date().getHours();
@@ -404,41 +415,28 @@ function analyzeFrame(){
 
     let lampDetected = false;
 
-    // =========================
-    // MODE MALAM
-    // =========================
-
     if(isNight){
 
         lampDetected = (
 
-            // Ruangan cukup terang
             brightness > 58 &&
 
-            // Cahaya cukup merata
             mediumRatio > 0.28 &&
 
-            // Ada area terang
             brightRatio > 0.015
 
         );
 
     }
-
-    // =========================
-    // MODE SIANG
-    // =========================
-
     else{
 
-        // Siang dianggap OFF
         lampDetected = false;
 
     }
 
-    // =========================
+    // =====================
     // OUTPUT
-    // =========================
+    // =====================
 
     if(lampDetected){
 
