@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Smart Light Detector - Ultimate</title>
+    <title>AI Smart Light Detector - Auto Fixed</title>
     <style>
         :root {
             --bg: #05070a;
@@ -134,7 +134,7 @@
 </head>
 <body>
 
-    <h2>LUX MONITOR <small style="color: var(--accent); font-size: 0.4em;">V3.9 PRO</small></h2>
+    <h2>LUX MONITOR <small style="color: var(--accent); font-size: 0.4em;">V4.1 AUTO</small></h2>
     
     <div class="main-card">
         <div id="video-container">
@@ -151,11 +151,11 @@
 
         <div id="status" class="status-display mati">OFF</div>
 
-        <button onclick="calibrate()">⚡ CALIBRATE SENSOR</button>
+        <button onclick="calibrate()">⚡ FORCE CALIBRATE</button>
         
         <div class="debug-grid">
             <div class="debug-item">RAW: <span id="val" style="color:#eee">0</span></div>
-            <div class="debug-item">LIMIT: <span id="thresh" style="color:var(--accent)">50</span></div>
+            <div class="debug-item">LIMIT: <span id="thresh" style="color:var(--accent)">170</span></div>
         </div>
     </div>
 
@@ -168,7 +168,9 @@
         const valDisp = document.getElementById('val');
         const threshDisp = document.getElementById('thresh');
 
-        let threshold = 50;
+        // Mengunci nilai dasar di 170 agar hanya mendeteksi sumber cahaya yang benar-benar kuat (lampu menyala)
+        let threshold = 170; 
+        threshDisp.innerText = threshold;
 
         async function init() {
             try {
@@ -185,7 +187,7 @@
 
         function calibrate() {
             const currentVal = parseInt(valDisp.innerText);
-            threshold = currentVal + 25; 
+            threshold = currentVal + 30; 
             threshDisp.innerText = threshold;
         }
 
@@ -209,32 +211,25 @@
                 valDisp.innerText = brightness;
                 meter.style.width = Math.min((brightness / 255) * 100, 100) + "%";
 
-                // DI SINI PERBAIKANNYA: Reset status canvas style setiap frame baru digambar
                 ctx.setLineDash([8, 8]);
                 ctx.lineWidth = 6;
 
+                // Logika otomatis berdasarkan batas tinggi
                 if (brightness > threshold) {
                     statusDiv.innerText = "ON";
                     statusDiv.className = "status-display nyala";
-                    
-                    // Set warna kotak tengah jadi Hijau Neon
                     ctx.strokeStyle = "#00ff88";
                     ctx.shadowBlur = 15;
                     ctx.shadowColor = "#00ff88";
                 } else {
                     statusDiv.innerText = "OFF";
                     statusDiv.className = "status-display mati";
-                    
-                    // Set warna kotak tengah jadi Merah Menyala
                     ctx.strokeStyle = "#ff3333";
                     ctx.shadowBlur = 15;
                     ctx.shadowColor = "#ff3333";
                 }
 
-                // Gambar kotaknya setelah warna (strokeStyle) dipastikan berubah
                 ctx.strokeRect(x, y, size, size);
-                
-                // Reset shadow biar ga bocor ke draw selanjutnya
                 ctx.shadowBlur = 0;
             }
             requestAnimationFrame(analyze);
