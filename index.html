@@ -1,186 +1,349 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Smart Light Detector - Pure Analytics</title>
-    <style>
-        :root {
-            --bg: #05070a;
-            --on-color: #00ff88;
-            --off-color: #ff3333;
-            --accent: #00f2ff;
-            --card-bg: rgba(255, 255, 255, 0.03);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        body { 
-            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
-            text-align: center; 
-            background: var(--bg); 
-            color: #ffffff; 
-            margin: 0; 
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
+<title>Smart Lamp Detector</title>
 
-        h2 { 
-            font-weight: 900; 
-            letter-spacing: 2px; 
-            margin-bottom: 25px; 
-            text-transform: uppercase;
-            background: linear-gradient(to right, var(--accent), #fff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+<style>
 
-        .main-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255,255,255,0.08);
-            padding: 24px;
-            border-radius: 30px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
-            max-width: 450px;
-            width: 90%;
-        }
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
 
-        #video-container { 
-            position: relative; 
-            width: 100%;
-            border-radius: 20px; 
-            overflow: hidden; 
-            background: #000;
-            border: 2px solid rgba(255,255,255,0.1);
-            line-height: 0;
-        }
+body{
+    background:#0b0f19;
+    font-family:Arial, sans-serif;
+    color:white;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+}
 
-        video { width: 100%; height: auto; display: block; filter: contrast(1.1); }
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+.container{
+    width:370px;
+    padding:20px;
+    border-radius:28px;
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.08);
+    box-shadow:
+    0 0 40px rgba(0,0,0,0.6);
+}
 
-        .status-display { 
-            margin: 15px 0 5px 0; 
-            padding: 30px; 
-            border-radius: 20px; 
-            font-size: 2.5rem; 
-            font-weight: 900; 
-            transition: all 0.3s ease;
-            letter-spacing: 6px;
-            border: 3px solid transparent;
-        }
+.header{
+    margin-bottom:20px;
+}
 
-        .nyala { 
-            background: rgba(0, 255, 136, 0.1); 
-            color: var(--on-color); 
-            border-color: var(--on-color);
-            box-shadow: 0 0 50px rgba(0, 255, 136, 0.4);
-            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-        }
+.header h1{
+    font-size:24px;
+}
 
-        .mati { 
-            background: rgba(255, 51, 51, 0.1); 
-            color: var(--off-color); 
-            border-color: var(--off-color);
-            box-shadow: 0 0 40px rgba(255, 51, 51, 0.3);
-            text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
-        }
-    </style>
+.header p{
+    color:#8b93a7;
+    margin-top:5px;
+    font-size:14px;
+}
+
+.camera-box{
+    position:relative;
+    overflow:hidden;
+    border-radius:22px;
+    background:black;
+}
+
+video{
+    width:100%;
+    display:block;
+}
+
+.overlay{
+    position:absolute;
+    inset:0;
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:22px;
+    pointer-events:none;
+}
+
+.scan-line{
+    position:absolute;
+    width:100%;
+    height:2px;
+    background:#00ffae;
+    box-shadow:0 0 15px #00ffae;
+    animation:scan 2s linear infinite;
+}
+
+@keyframes scan{
+    0%{
+        top:0%;
+    }
+
+    100%{
+        top:100%;
+    }
+}
+
+.status-card{
+    margin-top:20px;
+    background:rgba(255,255,255,0.04);
+    border-radius:22px;
+    padding:18px;
+    border:1px solid rgba(255,255,255,0.06);
+}
+
+.status-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.status-text{
+    font-size:22px;
+    font-weight:bold;
+}
+
+.indicator{
+    width:15px;
+    height:15px;
+    border-radius:50%;
+    background:red;
+    box-shadow:0 0 15px red;
+    transition:0.3s;
+}
+
+.desc{
+    margin-top:10px;
+    color:#9aa3b2;
+    font-size:14px;
+    line-height:1.5;
+}
+
+.bar{
+    width:100%;
+    height:10px;
+    background:#1a2233;
+    border-radius:30px;
+    margin-top:18px;
+    overflow:hidden;
+}
+
+.fill{
+    width:0%;
+    height:100%;
+    border-radius:30px;
+    background:linear-gradient(
+        90deg,
+        #00ffae,
+        #00c3ff
+    );
+    transition:0.3s;
+}
+
+.percent{
+    margin-top:8px;
+    text-align:right;
+    font-size:13px;
+    color:#7e8797;
+}
+
+.footer{
+    margin-top:18px;
+    text-align:center;
+    color:#5f6775;
+    font-size:12px;
+}
+
+</style>
 </head>
 <body>
 
-    <h2>LUX MONITOR <small style="color: var(--accent); font-size: 0.4em;">V8.0 PURE</small></h2>
-    
-    <div class="main-card">
-        <div id="video-container">
-            <video id="video" autoplay playsinline></video>
-            <canvas id="canvas"></canvas>
-        </div>
+<div class="container">
 
-        <div id="status" class="status-display mati">OFF</div>
+    <div class="header">
+        <h1>Smart Lamp Detector</h1>
+        <p>Camera AI Light Recognition</p>
     </div>
 
-    <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        const statusDiv = document.getElementById('status');
+    <div class="camera-box">
 
-        async function init() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "environment" },
-                    audio: false
-                });
-                video.srcObject = stream;
-                requestAnimationFrame(analyze);
-            } catch (e) {
-                statusDiv.innerText = "NO CAMERA";
-            }
+        <video id="video" autoplay playsinline></video>
+
+        <div class="overlay"></div>
+
+        <div class="scan-line"></div>
+
+    </div>
+
+    <div class="status-card">
+
+        <div class="status-top">
+
+            <div class="status-text" id="status">
+                Detecting...
+            </div>
+
+            <div class="indicator" id="indicator"></div>
+
+        </div>
+
+        <div class="desc" id="desc">
+            Scanning room lighting...
+        </div>
+
+        <div class="bar">
+            <div class="fill" id="fill"></div>
+        </div>
+
+        <div class="percent" id="percent">
+            0%
+        </div>
+
+    </div>
+
+    <div class="footer">
+        Artificial Light Detection System
+    </div>
+
+</div>
+
+<canvas
+id="canvas"
+width="300"
+height="200"
+style="display:none;">
+</canvas>
+
+<script>
+
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const statusText = document.getElementById("status");
+const desc = document.getElementById("desc");
+const indicator = document.getElementById("indicator");
+const fill = document.getElementById("fill");
+const percent = document.getElementById("percent");
+
+navigator.mediaDevices.getUserMedia({
+    video:true
+})
+.then(stream=>{
+
+    video.srcObject = stream;
+
+    setInterval(analyzeFrame,500);
+
+})
+.catch(err=>{
+
+    alert("Camera tidak bisa diakses");
+
+});
+
+function analyzeFrame(){
+
+    ctx.drawImage(
+        video,
+        0,
+        0,
+        300,
+        200
+    );
+
+    const frame = ctx.getImageData(
+        0,
+        0,
+        300,
+        200
+    );
+
+    const data = frame.data;
+
+    let brightness = 0;
+    let lampPixels = 0;
+
+    for(let i=0;i<data.length;i+=4){
+
+        const r = data[i];
+        const g = data[i+1];
+        const b = data[i+2];
+
+        const avg = (r+g+b)/3;
+
+        brightness += avg;
+
+        // Deteksi karakter lampu
+        // Warm putih stabil
+        if(
+            r > 140 &&
+            g > 120 &&
+            b < 180
+        ){
+            lampPixels++;
         }
 
-        function analyze() {
-            if (video.videoWidth > 0) {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                
-                const size = 140; 
-                const x = (canvas.width/2) - (size/2);
-                const y = (canvas.height/2) - (size/2);
-                const pixels = ctx.getImageData(x, y, size, size).data;
+    }
 
-                let maxB = 0;
-                let minB = 255;
-                let totalB = 0;
-                let count = 0;
+    brightness /= (data.length/4);
 
-                for (let i = 0; i < pixels.length; i += 4) {
-                    const r = pixels[i];
-                    const g = pixels[i + 1];
-                    const b = pixels[i + 2];
-                    
-                    // Rumus sensitivitas cahaya murni
-                    const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
-                    
-                    if (brightness > maxB) maxB = brightness;
-                    if (brightness < minB) minB = brightness;
-                    totalB += brightness;
-                    count++;
-                }
+    const lampRatio =
+        lampPixels / (data.length/4);
 
-                const avgB = totalB / count;
-                
-                // Menghitung variasi kontras tajam di area lampu
-                const localContrast = maxB - avgB;
+    const level =
+        Math.min(100, Math.floor(brightness));
 
-                ctx.setLineDash([6, 6]);
-                ctx.lineWidth = 5;
+    fill.style.width = level + "%";
+    percent.innerHTML = level + "% Brightness";
 
-                // LOGIKA ANTI-CAHAYA JENDELA / ANTI-PANTULAN:
-                // Lampu benar-benar NYALA jika ada titik silau (maxB > 200) DAN kontrasnya sangat tajam (localContrast > 75)
-                if (maxB > 200 && localContrast > 75) {
-                    statusDiv.innerText = "ON";
-                    statusDiv.className = "status-display nyala";
-                    ctx.strokeStyle = "#00ff88";
-                    ctx.shadowBlur = 20;
-                    ctx.shadowColor = "#00ff88";
-                } else {
-                    statusDiv.innerText = "OFF";
-                    statusDiv.className = "status-display mati";
-                    ctx.strokeStyle = "#ff3333";
-                    ctx.shadowBlur = 10;
-                    ctx.shadowColor = "#ff3333";
-                }
+    // ===== DETEKSI =====
 
-                ctx.strokeRect(x, y, size, size);
-                ctx.shadowBlur = 0;
-            }
-            requestAnimationFrame(analyze);
-        }
+    // Lampu ON
+    if(
+        brightness > 60 &&
+        lampRatio > 0.08
+    ){
 
-        init();
-    </script>
+        statusText.innerHTML =
+            "Lamp ON";
+
+        desc.innerHTML =
+            "Artificial room light detected.";
+
+        indicator.style.background =
+            "#00ff99";
+
+        indicator.style.boxShadow =
+            "0 0 18px #00ff99";
+
+    }
+
+    // Semua selain lampu dianggap OFF
+    else{
+
+        statusText.innerHTML =
+            "Lamp OFF";
+
+        desc.innerHTML =
+            "No artificial light detected.";
+
+        indicator.style.background =
+            "#ff3b3b";
+
+        indicator.style.boxShadow =
+            "0 0 18px #ff3b3b";
+
+    }
+
+}
+
+</script>
+
 </body>
 </html>
